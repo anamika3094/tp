@@ -1,107 +1,140 @@
-# Adobe India Hackathon 2025 – Challenge 1a: PDF Outline Extractor
+# 📘 PDF Title & Heading Extractor
+Adobe India Hackathon 2025 – Challenge 1a Submission
 
-This solution automatically extracts a structured **title** and **outline (headings H1–H4)** from academic or technical PDF documents. It combines font-based layout analysis with ML-driven semantic validation to produce clean, hierarchical JSON output.
-
----
-
-## ✅ Approach Overview
-
-### 1. Text & Style Extraction
-- Extracts visible lines using **PyMuPDF**, capturing:
-  - `text`, `font size`, `font`, `bold`, `italic`, `x/y` positions, and `color`
-- Filters out invisible or empty lines, form fields, and purely decorative text.
-
-### 2. Page-Level Statistical Analysis
-Each page is profiled using:
-- Font and style distribution
-- Header/footer detection using top 2 and bottom 2 lines
-- Line spacing variance
-- Common x-coordinate positions (for alignment inference)
-
-### 3. Title Detection
-- Candidate title lines are chosen from **Page 1** using the top 90% font size.
-- Repeated lines from headers/footers are removed.
-- Titles across multiple lines are grouped using x/y proximity.
-- Final title is selected as the **longest clean block**.
-
-### 4. Heading Extraction (H1–H4)
-Each line is scored using both layout and semantic features:
-
-#### 🔢 Scoring Formula:
-```
-Score = 
-  0.25 × Font Score +
-  0.2 × Bold Score +
-  0.1 × Italic Score +
-  0.2 × Section Pattern Match +
-  0.15 × Left Alignment Score +
-  0.1 × Semantic Similarity Score
-  - Dense Line Penalty
-  - Length Penalty
-```
-
-- **Section Match**: detects patterns like `1.2`, `2.1.1`, etc.
-- **Semantic Similarity**: measured against known headings like `introduction`, `summary`, `results`, using:
-
-```python
-SentenceTransformer("paraphrase-MiniLM-L6-v2")
-```
-
-- Headings are assigned `H1–H4` based on the depth of section numbering or layout importance.
-
-### 5. Table Detection
-- Pages with **>40 lines** and **low line-spacing variance (<5)** are flagged as **table-heavy** to avoid false headings.
-
-### 6. Caching for Speed
-- Semantic similarity uses `@lru_cache` to minimize redundant model inference and accelerate large PDF processing.
+This project automatically extracts the **document title** and **structured section headings (H1–H4)** from PDF files using a combination of **layout heuristics**, **statistical analysis**, and **semantic scoring**. The output is a clean, hierarchical JSON suitable for indexing, summarization, or Table of Contents (TOC) generation.
 
 ---
 
-## 🧰 Models & Libraries Used
+## 🚀 Features
 
-| Purpose            | Library / Model                            |
-|--------------------|---------------------------------------------|
-| PDF Parsing        | `PyMuPDF` (`fitz`)                          |
-| Semantic Matching  | `sentence-transformers` (MiniLM-L6-v2)      |
-| Data Analysis      | `collections`, `re`, `unicodedata`, `numpy` |
+| Feature                              | Included | Description                                                                 |
+|--------------------------------------|----------|-----------------------------------------------------------------------------|
+| Title extraction from Page 1         | ✅       | Dynamically detects and merges top font lines                              |
+| Heading detection with scoring engine| ✅       | Combines font, alignment, section patterns, and semantic similarity         |
+| Semantic filtering with caching      | ✅       | Uses `SentenceTransformer` + `@lru_cache` for speed                         |
+| Dynamic layout adaptation            | ✅       | Thresholds adapt per document statistics                                    |
+| Heading levels (H1–H6) via regex     | ✅       | Detects structured patterns like 1.2, 1.2.3 etc.                            |
+| Table page skipping                  | ✅       | Based on line count and line spacing variance                              |
+| Output as JSON file                  | ✅       | Saved in `Output/filename.json` format                                     |
+| Batch PDF processing                 | ✅       | Auto-processes all PDFs in `Input/` folder                                 |
 
 ---
 
-## 🏗️ Project Structure
+## 🧠 Strategy Breakdown
+
+### Preprocessing
+- Extracts all visible lines with metadata: font, size, bold, italic, x/y position
+- Cleans invisible or empty lines
+
+### Page-Level Stats
+- Computes average font size, line density, x/y alignment stats
+- Identifies and skips probable table-heavy pages
+
+### Title Extraction
+- Picks top font lines from Page 1
+- Merges multi-line titles using y/x proximity
+- Removes repeated headers and footers
+
+### Heading Detection
+Each line is scored using:
+
+- Font size ratio
+- Bold and italic status
+- Section numbering pattern (e.g. 1.2)
+- Left alignment proximity
+- Semantic similarity (for short lines only)
+- Dense region penalty
+- Length penalty
+
+Final score determines heading candidacy and assigns H1–H4 level.
+
+### Post-processing
+- Deduplicates title/heading overlaps
+- Outputs clean, structured JSON
+
+---
+
+## 🧪 Example Output
+
+```json
+{
+  "title": "Machine Learning Report",
+  "headings": [
+    {
+      "level": "H1",
+      "text": "1 Introduction",
+      "page": 0
+    },
+    {
+      "level": "H2",
+      "text": "1.1 Background",
+      "page": 0
+    }
+  ]
+}
+```
+
+---
+
+## 🏗️ Folder Structure
 
 ```
-📁 Input        → PDF files for processing  
-📁 Output       → JSON output files  
-process_pdfs.py → Main script  
-README.md       → Documentation  
+📁 Input/        → PDF files to process
+📁 Output/       → JSON outputs saved here
+process_pdfs.py → Main script
+README.md       → Project documentation
 ```
 
 ---
 
 ## ⚙️ Build & Run Instructions
 
-> 📌 This is for documentation only. Actual execution should use the "Expected Execution" flow.
+> This section is for documentation purposes only.
 
-### Install Dependencies
+### Prerequisites
+
+- Python 3.8+
+- Install dependencies:
 
 ```bash
 pip install pymupdf
 pip install sentence-transformers
 ```
 
-### Run Script
+### Run
 
 ```bash
 python process_pdfs.py
 ```
 
-- The script processes all PDFs in the `Input/` folder and saves structured output to `Output/`.
+- Automatically processes all `.pdf` files in the `Input/` folder
+- Saves structured JSONs to the `Output/` folder
 
 ---
 
-## 🔍 Highlights
+## 🛠️ Configuration Highlights
 
-- Multi-line title detection and merging using layout grouping
-- Smart filtering of headers, footers, form fields, and S.No patterns
-- Clean semantic heading validation using pre-trained embeddings
-- Scalable architecture for large PDF documents
+| Setting                      | Value/Logic                              |
+|------------------------------|-------------------------------------------|
+| Semantic model               | `paraphrase-MiniLM-L6-v2`                |
+| Confidence threshold         | 0.7                                      |
+| Heading score cap            | 1.5                                      |
+| Title duplication check      | Enabled                                  |
+| Adaptive thresholds          | Based on per-page stats                  |
+
+---
+
+## ✅ Best Practices
+
+- Place clean, OCR-readable PDFs into the `Input/` folder
+- For scanned documents, apply OCR (e.g., using Tesseract) before processing
+- Extendable to generate Markdown or HTML TOCs
+
+---
+
+## 🔧 Future Enhancements
+
+- Detect paragraph starts after headings
+- Export to Markdown or HTML
+- CLI flags for batch and verbosity control
+- Add a GUI for drag-and-drop PDF upload
