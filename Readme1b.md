@@ -1,64 +1,79 @@
 # Adobe India Hackathon 2025 – 🔍 Challenge 1B: Multi-Collection PDF Analysis
 **Adobe India Hackathon 2025 – Challengen 1B Submission**
 
-Welcome to the second phase of reimagining PDF reading! This challenge focuses on **intelligent content extraction**, **contextual analysis**, and **semantic matching** across multiple documents to serve **persona-based needs**.
+This project performs **persona-aware PDF section extraction** across multiple collections. It reads each document, extracts likely section headers, computes **semantic similarity** with a provided persona and job-to-be-done context, and ranks the top relevant segments. Output is a ranked, structured JSON for insight surfacing or summarization.
 
 ---
 
-## 🌟 Objective
+## 🚀 Features
 
-Given multiple folders of PDF files and a `persona` with a specific `job_to_be_done`, extract the **most relevant sections** across the PDFs and rank them by semantic importance using sentence embeddings.
-
----
-
-## 🧠 Core Approach
-
-1. **Input Structure**:
-   - Each folder (`Collection 1`, `Collection 2`, etc.) contains:
-     - `input.json`: Lists PDFs, persona, and job description
-     - PDF files for analysis
-
-2. **Extraction**:
-   - Uses `PyMuPDF` to parse each PDF and extract section-like headings based on formatting cues (e.g., title-cased lines under 100 chars).
-
-3. **Semantic Matching**:
-   - Loads the `all-MiniLM-L6-v2` model from `sentence-transformers`
-   - Embeds the `persona + job_to_be_done` as **context**
-   - Each section's title is compared using `cosine similarity`
-
-4. **Ranking**:
-   - Sections are scored and sorted by relevance
-   - Top 10 sections are saved
-   - Top 5 go into `subsection_analysis` for fine-grained insights
-
-5. **Output**:
-   - Results stored in `output.json` inside each collection
+| Feature                          | Included | Description                                                                 |
+|----------------------------------|----------|-----------------------------------------------------------------------------|
+| Multi-document collection input  | ✅       | Handles collections like `Collection 1`, `Collection 2`, etc.               |
+| Persona + Job context embedding  | ✅       | Embeds both role and job for semantic relevance                            |
+| Section title detection          | ✅       | Extracts title-cased, short lines from each page                           |
+| Semantic similarity ranking      | ✅       | Cosine similarity using `SentenceTransformer` embeddings                    |
+| Importance scoring & ranking     | ✅       | Ranks and selects most relevant sections                                   |
+| Subsection analysis              | ✅       | Includes refined insights from top-ranked sections                         |
+| JSON Output per collection       | ✅       | Outputs `output.json` for each document collection                         |
+| Batch processing for collections | ✅       | Auto-processes each collection folder                                      |
 
 ---
 
-## 🧪 Sample Output Format
+## 🧠 Strategy Breakdown
+
+### Input Format
+
+Each collection contains:
+- `input.json`:
+  - `persona` → role name (e.g., “Research Analyst”)
+  - `job_to_be_done` → task (e.g., “Understand AI in Education”)
+  - List of PDF filenames to scan
+
+### Preprocessing
+
+- Reads line-level text from all PDFs
+- Filters candidate section titles based on casing, length, and structure
+
+### Context Embedding
+
+- Converts `persona` + `job_to_be_done` into a unified sentence
+- Embeds using `all-MiniLM-L6-v2` from `sentence-transformers`
+
+### Semantic Scoring
+
+Each candidate section title is scored based on cosine similarity with context.
+Top N (e.g. 10) sections are retained.
+
+### Output
+
+Creates a structured output JSON:
+- `extracted_sections`: Top 10 ranked segments with metadata
+- `subsection_analysis`: Top 5 lines shown again as refined insights
+
+---
+
+## 🧪 Example Output
 
 ```json
 {
   "metadata": {
-    "input_documents": ["doc1.pdf", "doc2.pdf"],
-    "persona": "Research Analyst",
-    "job_to_be_done": "Understand recent trends in GenAI",
-    "generated_on": "2025-07-26T14:00:00Z"
+    "persona": "Researcher",
+    "job_to_be_done": "Understand GenAI trends"
   },
   "extracted_sections": [
     {
-      "section_title": "GenAI in Enterprise Applications",
+      "section_title": "GenAI in Healthcare",
+      "document": "ai_trends.pdf",
       "page_number": 3,
-      "document": "genai_trends.pdf",
       "importance_rank": 1
     }
   ],
   "subsection_analysis": [
     {
-      "document": "genai_trends.pdf",
+      "document": "ai_trends.pdf",
       "page_number": 3,
-      "refined_text": "GenAI in Enterprise Applications"
+      "refined_text": "GenAI in Healthcare"
     }
   ]
 }
@@ -66,61 +81,64 @@ Given multiple folders of PDF files and a `persona` with a specific `job_to_be_d
 
 ---
 
-## 📂 Folder Structure
+## 🏗️ Folder Structure
 
 ```
-📁 Challenge_1b/
-├── Collection 1/
-│   ├── input.json
-│   ├── *.pdf
-│   └── output.json (auto-generated)
-├── Collection 2/
-│   └── ...
-├── Collection 3/
-│   └── ...
-├── analyze_collections.py
-└── README.md
+📁 Collection 1/     → Contains PDFs, input.json, output.json
+📁 Collection 2/     → Additional collection (optional)
+analyze_collections.py → Main script
+README.md           → Project documentation
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+## ⚙️ Build & Run Instructions
+
+> This section is for documentation purposes only.
+
+### Prerequisites
+
+- Python 3.8+
+- Install dependencies:
 
 ```bash
 pip install pymupdf
 pip install sentence-transformers
 ```
 
----
-
-## ▶️ How to Run
-
-Simply execute the script:
+### Run
 
 ```bash
 python analyze_collections.py
 ```
 
-- Processes all collections (`Collection 1`, `Collection 2`, etc.)
-- Outputs are saved to each respective folder
+- Automatically processes collections like `Collection 1`, `Collection 2`, etc.
+- Saves `output.json` for each with ranked results
 
 ---
 
-## 🛠️ Highlights
+## 🛠️ Configuration Highlights
 
-| Capability                    | Description |
-|------------------------------|-------------|
-| Multi-PDF comparison         | Extracts insights from many documents simultaneously |
-| Persona-specific relevance   | Uses semantic embedding to tailor output |
-| Top-k importance ranking     | Sections are ranked by cosine similarity |
-| Scalable design              | Easily extendable to more folders and use-cases |
-| Lightweight, fast & accurate | Uses a lightweight transformer for performance |
+| Setting                  | Value/Logic                        |
+|--------------------------|-------------------------------------|
+| Semantic model           | `all-MiniLM-L6-v2`                 |
+| Ranking logic            | Cosine similarity from embeddings  |
+| Subsection sample count  | Top 5 from final rankings           |
+| Missing PDF check        | Skips files not found in folder     |
 
 ---
 
-## 🔮 Future Enhancements
+## ✅ Best Practices
 
-- Enable section chaining for topic continuity
-- Embed full paragraphs for deeper context
-- GUI or notebook interface for visualization
-- Integration with Adobe Embed API (Phase 2)
+- Use clearly structured PDFs (non-scanned)
+- Ensure section headers are reasonably title-cased and meaningful
+- Extendable to fetch paragraph text around section headers
+
+---
+
+## 🔧 Future Enhancements
+
+- Paragraph context extraction after headings
+- Cross-document linking between sections
+- Support for overlapping personas and multitask jobs
+- GUI or dashboard for insights visualization
