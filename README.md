@@ -1,5 +1,5 @@
-# Adobe India Hackathon 2025 – Challenge 1a:📘 PDF Title & Heading Extractor
-Adobe India Hackathon 2025 – Challenge 1a Submission
+# Adobe India Hackathon 2025 – Challenge 1A:📘 PDF Title & Heading Extractor
+Adobe India Hackathon 2025 – Challenge 1A Submission
 
 This project automatically extracts the **document title** and **structured section headings (H1–H4)** from PDF files using a combination of **layout heuristics**, **statistical analysis**, and **semantic scoring**. The output is a clean, hierarchical JSON suitable for indexing, summarization, or Table of Contents (TOC) generation.
 
